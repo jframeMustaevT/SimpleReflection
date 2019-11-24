@@ -1,130 +1,143 @@
 package part01.lesson04.tak04;
 
 import java.lang.reflect.Field;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.lang.reflect.Modifier;
+import java.util.*;
+
 
 public class UtilReflection {
-    public static void main(String[] args) {
-    }
 
-    /**
-     * @param o
-     * @param fieldsToCleanup name fields
-     * @param fieldsToOutput name fields
-     * @throws IllegalAccessException
-     * @throws NoSuchFieldException
-     */
-     void cleanup(Object o, Set<String> fieldsToCleanup, Set<String> fieldsToOutput) throws IllegalAccessException, NoSuchFieldException {
 
-        Class<?> clazz = o.getClass();
-        Class obj = clazz;
-        Class[] interfaces = obj.getInterfaces();
+    static  void cleanup(Object o, Set<String> fieldsToCleanup, Set<String> fieldsToOutput) throws IllegalAccessException, NoSuchFieldException {
 
-        Set<String> setToClean = new HashSet<String>();
-        Set<String> setToOut = new HashSet<String>();
+        if (o instanceof Map) {
+            getValues(o, fieldsToCleanup, fieldsToOutput);
 
-        boolean isExecuteMap = false;
-        for (Class anInterface : interfaces) {
-            if (anInterface.getName().equals(Map.class)) {
-                isExecuteMap = true;
-                break;
-            }
-        }
-
-        if (isExecuteMap) {
-            Set<?> setContainsKey = ((Map) o).keySet();
-            for (Object objSet : setContainsKey) {
-                setToClean = cleanTo(((Map) o).get(objSet), fieldsToCleanup);
-                setToOut = cleanToOut(((Map) o).get(objSet), fieldsToOutput);
-                cleanToObject(((Map)o).get(objSet),setToClean);
-                cleanToOutputObject(((Map)o).get(objSet),setToOut);
-            }
         } else {
-
+            getFields(o, fieldsToCleanup, fieldsToOutput);
         }
-
     }
 
+
     /**
+     *  In this method  get Elements Map by list keys Set
      * @param o
      * @param fieldsToCleanup
-     * @return
-     */
-    private static Set<String> cleanTo(Object o, Set<String> fieldsToCleanup) {
-        Class<?> clazz = o.getClass();
-        Field[] fields = clazz.getDeclaredFields();
-        Set<String> setToClean = new HashSet<>();
-        for (Field field : fields) {
-            if (fieldsToCleanup.contains(field.getName())) {
-                setToClean.add(field.getName());
-            }
-        }
-        return setToClean;
-
-    }
-
-    /**
-     * @param o
      * @param fieldsToOutput
-     * @return
      */
-    private static Set<String> cleanToOut(Object o, Set<String> fieldsToOutput) {
-        Class<?> clazz = o.getClass();
-        Field[] fields = clazz.getDeclaredFields();
-        Set<String> setToOut = new HashSet<>();
-        for (Field field : fields) {
-            if (fieldsToOutput.contains(field.getName())) {
-                setToOut.add(field.getName());
+    private static void getValues(Object o, Set<String> fieldsToCleanup, Set<String> fieldsToOutput) {
+        Map map= (Map) o;
+        Set setKey= map.keySet();
+        Iterator iterator=setKey.iterator();
+
+        while (iterator.hasNext()) {
+            Object key=iterator.next();
+            if (fieldsToCleanup.contains((String)key)) {
+                iterator.remove();
             }
+            if (fieldsToOutput.contains((String) key)) {
+                System.out.println(key + "=" + map.get(key));
+
+            }
+
         }
-        return setToOut;
+
     }
 
 
     /**
+     * In this get fields object by list from Set
      * @param o
      * @param fieldsToCleanup
-     * @throws NoSuchFieldException
+     * @param fieldsToOutput
      * @throws IllegalAccessException
      */
-    private static void cleanToObject(Object o, Set<String> fieldsToCleanup) throws
-            NoSuchFieldException, IllegalAccessException {
-        Class<?> clazz = o.getClass();
-        for (String fieldsOutObject : fieldsToCleanup) {
-            Field field = clazz.getDeclaredField(fieldsOutObject);
+    private static void getFields(Object o, Set<String> fieldsToCleanup, Set<String> fieldsToOutput)  throws  IllegalAccessException{
+        Class clazz=o.getClass();
+        Field[] fields=clazz.getDeclaredFields();
+        for (Field field : fields) {
+            outputRemove(field,o,fieldsToCleanup);
+            fieldAvailability(field,o,fieldsToOutput);
+             
+        }
+    }
 
-            if (!field.isAccessible()) field.setAccessible(true);
+    /**
+     * In this method  the presence the output is checked
+     * @param field
+     * @param o
+     * @param fieldsToOutput
+     * @throws IllegalAccessException
+     */
+    private static void fieldAvailability(Field field, Object o, Set<String> fieldsToOutput)  throws IllegalAccessException{
+        if (fieldsToOutput.contains(field.getName())) {
             if (field.getType().isPrimitive()) {
-
-            } else {
-                field.set(o, null);
+                String str=String.valueOf(field.get(o));
+                System.out.println(str);
+            }else  {
+                if (field.get(o)== null)
+                    return;
+                String s=field.get(o).toString();
+                System.out.println(s);
             }
+        }else  {
+            throw new IllegalArgumentException("there is no such field for output");
         }
     }
 
-
     /**
+     * in this method the checks for a field to set default values
+     * @param field
      * @param o
-     * @param fieldsToOutput
-     * @throws NoSuchFieldException
+     * @param fieldsToCleanup
      * @throws IllegalAccessException
      */
-    private static void cleanToOutputObject(Object o, Set<String> fieldsToOutput) throws
-            NoSuchFieldException, IllegalAccessException {
-            Class<?> clazz = o.getClass();
-            for (String fieldsOutObject : fieldsToOutput) {
-                Field field = clazz.getDeclaredField(fieldsOutObject);
-
-                if (!field.isAccessible()) field.setAccessible(true);
-                if (field.getType().isPrimitive()) {
-
-                } else {
-                    field.set(o, null);
-                }
-            }
+    private static void outputRemove(Field field, Object o, Set<String> fieldsToCleanup) throws IllegalAccessException {
+        if (fieldsToCleanup.contains(field.getName())){
+            if (Modifier.isPrivate(field.getModifiers())) field.setAccessible(true);
+                defaultValues(field,o);
+        }else  {
+            throw new IllegalArgumentException(" there is no such field in Set ");
         }
+    }
+
+    /**
+     * Setting values by default
+     * @param field
+     * @param o
+     * @throws IllegalAccessException
+     */
+    private static void defaultValues(Field field, Object o)  throws  IllegalAccessException {
+        switch (field.getType().toString()){
+            case "byte":
+                field.setByte(o, (byte) 0);
+                break;
+            case "short":
+                field.setShort(o, (short) 0);
+                break;
+            case "int":
+                field.setInt(o,0);
+                break;
+            case "long":
+                field.setLong(o,0);
+                break;
+            case "float":
+                field.setFloat(o,0);
+                break;
+            case "double":
+                field.setDouble(o,0);
+                break;
+            case "boolean":
+                field.setBoolean(0,false);
+                break;
+            case "char":
+                field.setChar(0,'\u0000');
+                break;
+            default:
+                field.set(o,null);
+                break;
+        }
+      }
     }
 
 

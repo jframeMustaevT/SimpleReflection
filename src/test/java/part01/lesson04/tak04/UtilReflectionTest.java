@@ -1,37 +1,67 @@
 package part01.lesson04.tak04;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class UtilReflectionTest {
+    MusicArt musicArt;
+    Set<String>fieldsToCleanup;
+    Set<String>fieldsToOutput;
+    Map map;
+    private List albums;
 
-    @org.junit.jupiter.api.Test
-    public  void cleanupObjectSetValue() throws NoSuchFieldException, IllegalAccessException {
-        MusicRef musicRef= new MusicRef(2,"Jack","Pop","RapList");
-        UtilReflection utilReflection=new UtilReflection();
-        Set<String> stringSet=new HashSet<>();
-        stringSet.add("name");
-        Set<String>stringsSet=new HashSet<>();
-        stringsSet.add("typeGenre");
-        utilReflection.cleanup(musicRef,stringSet,stringsSet);
-        assertEquals(musicRef.getName(),("Jack"));
-        assertEquals(musicRef.getTypeGenre(),("Pop"));
+    @BeforeEach
+    void impose() {
+        List<MusicRef>musicRefList= new ArrayList<MusicRef>()
+        {{
+            add(new MusicRef("Rap",23));
+             add(new MusicRef("Rock",32));
+        }};
 
-    }
+        musicArt=new MusicArt(
+                2334,"Antony",albums,3245f);
+        fieldsToCleanup=new HashSet<String>()
+        {{
+            add("nubSongs");
+            add("typeGenre");
+            add("albums");
+            add("payCheck");
+        }};
+        fieldsToOutput=new HashSet<String>()
+        {{
+            add("albums");
+            add("payCheck");
+            add("nubSongs");
+            add("typeGenre");
+
+        }};
+        map=new HashMap()
+        {{
+            put("albums","SunVerdom");
+            put("payCheck", "2000$");
+            put("nubSongs","23456");
+            put("typeGenre","jazz");
+
+        }};
+
+}
+
     @Test
-    public void cleanupMapSetValue() {
-        UtilReflection utilReflection= new UtilReflection();
-        Map<Integer,MusicRef> musicRefMap=new HashMap();
-        musicRefMap.put(3,new MusicRef(6,"Nick","Rock","jaz"));
-        musicRefMap.put(4,new MusicRef(7,"Rob","Rap","blues"));
-        assertEquals(musicRefMap.get(4).getTypeGenre(),("Rap"));
-        assertEquals(musicRefMap.get(3).getName(),("Nick"));
+    void cleanup() throws NoSuchFieldException, IllegalAccessException {
+        UtilReflection.cleanup(musicArt,fieldsToCleanup,fieldsToOutput);
+        assertNull(musicArt.getTypeGenre());
+        assertEquals(0,musicArt.getNumbSongs());
+        assertNull(musicArt.getAlbums());
+        assertEquals(0,musicArt.getPayCheck());
 
+        UtilReflection.cleanup(map,fieldsToCleanup,fieldsToOutput);
+        assertNull(map.get("albums"));
+        assertNull(map.get("payCheck"));
+        assertNull(map.get("nubSongs"));
+        assertNull(map.get("typeGenre"));
     }
 }

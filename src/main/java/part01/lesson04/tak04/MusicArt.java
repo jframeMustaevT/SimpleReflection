@@ -4,15 +4,17 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class MusicRef {
-    private String name;
-    private int id;
+public class MusicArt {
 
+    private int numbSongs;
+    private String typeGenre;
+    private List albums;
+    private float payCheck;
 
 
 }
-
